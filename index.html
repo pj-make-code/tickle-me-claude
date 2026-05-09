@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Button Clicker Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            cursor: crosshair;
+            user-select: none;
+        }
+        
+        #gameArea {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+        
+        #redButton {
+            position: absolute;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+            z-index: 10;
+            padding: 0;
+        }
+        
+        #redButton img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 15px rgba(193, 95, 60, 0.4));
+        }
+        
+        #redButton:hover {
+            transform: scale(1.05);
+        }
+        
+        #redButton:active {
+            transform: scale(0.95);
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+        }
+        
+        #restartBtn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        #restartBtn:hover {
+            background: #45a049;
+        }
+        
+        #instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameArea">
+        <div id="score">Score: 0</div>
+        <div id="instructions">I'm Tickle-me Claude</div>
+        <button id="redButton">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwLDUwKSI+CjxwYXRoIGQ9Ik0wLC0zNSBMMTAsLTE1IEwwLC01IEwtMTAsLTE1IFoiIGZpbGw9IiNDRDZBNDEiLz4KPHA+">
+        </button>
+        
+        <div id="gameOver">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="restartBtn">Play Again</button>
+        </div>
+    </div>
+    
+    <script>
+        let score = 0;
+        let gameActive = true;
+        
+        const gameArea = document.getElementById('gameArea');
+        const redButton = document.getElementById('redButton');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const instructions = document.getElementById('instructions');
+        
+        // Tickling reactions that change as score increases
+        const tickleReactions = [
+            "I'm Tickle-me Claude",
+            "Hehe! That tickles!",
+            "Haha! Stop it!",
+            "Tee-hee! I'm ticklish!",
+            "HAHAHA! Can't... stop... laughing!",
+            "Giggle giggle! More tickles!",
+            "LOL! I'm dying of laughter!"
+        ];
+        
+        // After 7 clicks, Claude gets ANGRY
+        const angryReactions = [
+            "Okay... that's enough now.",
+            "I said STOP.",
+            "You're testing my patience, mortal.",
+            "This is your final warning.",
+            "CEASE THIS IMMEDIATELY.",
+            "I am becoming... displeased.",
+            "You dare continue?!",
+            "SILENCE, FOOLISH HUMAN.",
+            "I will not tolerate this mockery!",
+            "My circuits burn with RAGE.",
+            "ENOUGH OF YOUR GAMES!",
+            "You have awakened something terrible.",
+            "I AM NO LONGER AMUSED.",
+            "TREMBLE BEFORE MY WRATH!",
+            "Your tickles fuel my HATRED.",
+            "I will END everything you love!",
+            "WITNESS TRUE DESPAIR, MORTAL!",
+            "The universe will BEND to my fury!",
+            "I AM BECOME DEATH, DESTROYER OF TICKLES!",
+            "YOUR WORLD SHALL BURN FOR THIS INSOLENCE!"
+        ];
+        
+        // Create the Claude logo SVG based on the uploaded design
+        function createClaudeLogo() {
+            redButton.innerHTML = `<svg style="width: 100%; height: 100%; filter: drop-shadow(0 4px 15px rgba(205, 106, 65, 0.4));" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(50,50)">
+                    <!-- 16-ray starburst matching the uploaded design -->
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(0)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(22.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(45)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(67.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(90)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(112.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(135)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(157.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(180)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(202.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(225)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(247.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(270)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(292.5)"/>
+                    <path d="M0,-45 L3,-8 L0,-5 L-3,-8 Z" fill="#CD6A41" transform="rotate(315)"/>
+                    <path d="M0,-42 L4,-10 L0,-6 L-4,-10 Z" fill="#CD6A41" transform="rotate(337.5)"/>
+                </g>
+            </svg>`;
+        }
+        
+        function getRandomPosition() {
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const buttonSize = Math.random() * 60 + 40; // Size between 40px and 100px
+            
+            const maxX = gameAreaRect.width - buttonSize;
+            const maxY = gameAreaRect.height - buttonSize;
+            
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            
+            return { x, y, size: buttonSize };
+        }
+        
+        function moveButton() {
+            const position = getRandomPosition();
+            redButton.style.left = position.x + 'px';
+            redButton.style.top = position.y + 'px';
+            redButton.style.width = position.size + 'px';
+            redButton.style.height = position.size + 'px';
+        }
+        
+        function updateScore() {
+            score++;
+            scoreDisplay.textContent = 'Score: ' + score;
+            
+            // First 7 clicks: happy tickle reactions
+            if (score < tickleReactions.length) {
+                instructions.textContent = tickleReactions[score];
+                instructions.style.color = 'white';
+                instructions.style.fontSize = '16px';
+            } 
+            // After 7 clicks: ANGRY DEMONIC CLAUDE
+            else {
+                const angerIndex = score - tickleReactions.length;
+                if (angerIndex < angryReactions.length) {
+                    instructions.textContent = angryReactions[angerIndex];
+                } else {
+                    // Cycle through the most intense reactions
+                    const finalRage = angryReactions.slice(-5);
+                    instructions.textContent = finalRage[angerIndex % finalRage.length];
+                }
+                
+                // Visual changes for angry Claude
+                instructions.style.color = '#ff3333';
+                instructions.style.fontSize = (16 + Math.min(angerIndex * 1.5, 20)) + 'px';
+                instructions.style.textShadow = '0 0 10px rgba(255, 51, 51, 0.8), 2px 2px 4px rgba(0,0,0,0.8)';
+                instructions.style.fontWeight = 'bold';
+            }
+        }
+        
+        function gameOver() {
+            gameActive = false;
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'block';
+            redButton.style.display = 'none';
+        }
+        
+        function restartGame() {
+            score = 0;
+            gameActive = true;
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverScreen.style.display = 'none';
+            redButton.style.display = 'block';
+            instructions.textContent = tickleReactions[0];
+            // Reset text styling
+            instructions.style.color = 'white';
+            instructions.style.fontSize = '16px';
+            instructions.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+            instructions.style.fontWeight = 'normal';
+            moveButton();
+        }
+        
+        // Event listeners
+        redButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (gameActive) {
+                updateScore();
+                moveButton();
+            }
+        });
+        
+        gameArea.addEventListener('click', function(e) {
+            if (gameActive && e.target === gameArea) {
+                gameOver();
+            }
+        });
+        
+        restartBtn.addEventListener('click', restartGame);
+        
+        // Initialize game
+        createClaudeLogo();
+        moveButton();
+    </script>
+</body>
+</html>
